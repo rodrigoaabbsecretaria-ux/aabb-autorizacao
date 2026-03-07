@@ -627,6 +627,9 @@ function gerarAutorizacao(){
     })
     .then(r => r.json())
     .then(function(res){
+      console.log("Resposta backend:", res);
+      console.log("IP enviado:", res.debug_ip);
+      console.log("Loc enviada:", res.debug_loc);
       loading.style.display = "none";
       btnGerar.disabled = false;
       if(res.b64){
