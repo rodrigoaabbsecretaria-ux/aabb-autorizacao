@@ -433,11 +433,11 @@ function obterLocalizacao(){
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     function usarIP(){
-      fetch("https://ip-api.com/json/?fields=city,regionName,country&lang=pt-BR")
+      fetch("https://ipapi.co/json/")
         .then(r => r.json()).catch(() => ({}))
         .then(function(d){
           console.log("IP API:", d);
-          const loc = d.city ? (d.city + ", " + (d.regionName||"") + " - " + (d.country||"")) : "";
+          const loc = d.city ? (d.city + ", " + (d.region||"") + " - " + (d.country_name||"")) : "";
           resolve({ lat: 0, lon: 0, localizacaoCliente: loc });
         });
     }
