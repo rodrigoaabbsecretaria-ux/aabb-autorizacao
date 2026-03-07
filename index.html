@@ -440,12 +440,11 @@ function obterLocalizacao(){
           const ip = ipMatch ? ipMatch[1].trim() : "";
           console.log("IP cliente:", ip);
           if(ip){
-            // Busca localização pelo IP
-            fetch("https://freeipapi.com/api/json/" + ip)
+            fetch("https://ipapi.co/" + ip + "/json/")
               .then(r => r.json()).catch(() => ({}))
               .then(function(d){
-                console.log("freeipapi:", d);
-                const loc = d.cityName ? (d.cityName + ", " + (d.regionName||"") + " - " + (d.countryName||"")) : "";
+                console.log("ipapi.co:", d);
+                const loc = d.city ? (d.city + ", " + (d.region||"") + " - " + (d.country_name||"")) : "";
                 resolve({ lat: 0, lon: 0, localizacaoCliente: loc });
               });
           } else {
