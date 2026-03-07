@@ -426,26 +426,8 @@ function setStatus(msg, tipo){
 function obterLocalizacao(){
   return new Promise(function(resolve){
 
-    // Detecta se é dispositivo móvel
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-    function usarIP(){
-      // Cloudflare trace — funciona sem CORS em qualquer origem
-      fetch("https://cloudflare.com/cdn-cgi/trace")
-        .then(r => r.text())
-        .catch(() => "")
-        .then(function(txt){
-          // Extrai o IP do cliente
-          const ipMatch = txt.match(/ip=([^\n]+)/);
-          const ip = ipMatch ? ipMatch[1].trim() : "";
-          console.log("IP cliente:", ip);
-          // Envia o IP direto para o backend resolver sem chamadas externas
-          resolve({ lat: 0, lon: 0, localizacaoCliente: "", clienteIp: ip || "" });
-        });
-    }
-
-    if(isMobile && navigator.geolocation){
-      // Só usa GPS no celular
+    // GPS em qualquer dispositivo (mobile e desktop)
+    if(navigator.geolocation){
       navigator.geolocation.getCurrentPosition(
         function(pos){
           const lat = pos.coords.latitude;
@@ -465,19 +447,32 @@ function obterLocalizacao(){
               loc = [cidade, estado, pais].filter(Boolean).join(", ");
             }
             console.log("Localização GPS:", loc);
-            resolve({ lat: lat, lon: lon, localizacaoCliente: loc || ("Lat: " + lat.toFixed(4) + ", Lon: " + lon.toFixed(4)) });
+            resolve({ lat: lat, lon: lon, localizacaoCliente: loc || ("Lat: " + lat.toFixed(4) + ", Lon: " + lon.toFixed(4)), clienteIp: "" });
           });
         },
         function(err){
+          // GPS negado ou falhou — usa IP via Cloudflare
           console.log("GPS falhou, usando IP:", err.message);
-          usarIP();
+          fetch("https://cloudflare.com/cdn-cgi/trace")
+            .then(r => r.text()).catch(() => "")
+            .then(function(txt){
+              const ipMatch = txt.match(/ip=([^\n]+)/);
+              const ip = ipMatch ? ipMatch[1].trim() : "";
+              console.log("IP cliente:", ip);
+              resolve({ lat: 0, lon: 0, localizacaoCliente: "", clienteIp: ip || "" });
+            });
         },
         { timeout: 15000, enableHighAccuracy: false }
       );
     } else {
-      // Desktop: usa IP diretamente
-      console.log("Desktop detectado, usando IP");
-      usarIP();
+      // Sem GPS — usa IP
+      fetch("https://cloudflare.com/cdn-cgi/trace")
+        .then(r => r.text()).catch(() => "")
+        .then(function(txt){
+          const ipMatch = txt.match(/ip=([^\n]+)/);
+          const ip = ipMatch ? ipMatch[1].trim() : "";
+          resolve({ lat: 0, lon: 0, localizacaoCliente: "", clienteIp: ip || "" });
+        });
     }
   });
 }
