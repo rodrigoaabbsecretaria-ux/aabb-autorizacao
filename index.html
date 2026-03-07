@@ -439,17 +439,8 @@ function obterLocalizacao(){
           const ipMatch = txt.match(/ip=([^\n]+)/);
           const ip = ipMatch ? ipMatch[1].trim() : "";
           console.log("IP cliente:", ip);
-          if(ip){
-            fetch("https://api.country.is/" + ip)
-              .then(r => r.json()).catch(() => ({}))
-              .then(function(d){
-                console.log("country.is:", d);
-                // Tem o país, agora busca cidade via backend enviando o IP
-                resolve({ lat: 0, lon: 0, localizacaoCliente: "", clienteIp: ip });
-              });
-          } else {
-            resolve({ lat: 0, lon: 0, localizacaoCliente: "", clienteIp: "" });
-          }
+          // Envia o IP direto para o backend resolver sem chamadas externas
+          resolve({ lat: 0, lon: 0, localizacaoCliente: "", clienteIp: ip || "" });
         });
     }
 
@@ -481,7 +472,7 @@ function obterLocalizacao(){
           console.log("GPS falhou, usando IP:", err.message);
           usarIP();
         },
-        { timeout: 8000, enableHighAccuracy: false }
+        { timeout: 15000, enableHighAccuracy: false }
       );
     } else {
       // Desktop: usa IP diretamente
