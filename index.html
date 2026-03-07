@@ -440,15 +440,15 @@ function obterLocalizacao(){
           const ip = ipMatch ? ipMatch[1].trim() : "";
           console.log("IP cliente:", ip);
           if(ip){
-            fetch("https://ipapi.co/" + ip + "/json/")
+            fetch("https://api.country.is/" + ip)
               .then(r => r.json()).catch(() => ({}))
               .then(function(d){
-                console.log("ipapi.co:", d);
-                const loc = d.city ? (d.city + ", " + (d.region||"") + " - " + (d.country_name||"")) : "";
-                resolve({ lat: 0, lon: 0, localizacaoCliente: loc });
+                console.log("country.is:", d);
+                // Tem o país, agora busca cidade via backend enviando o IP
+                resolve({ lat: 0, lon: 0, localizacaoCliente: "", clienteIp: ip });
               });
           } else {
-            resolve({ lat: 0, lon: 0, localizacaoCliente: "" });
+            resolve({ lat: 0, lon: 0, localizacaoCliente: "", clienteIp: "" });
           }
         });
     }
@@ -624,7 +624,8 @@ function gerarAutorizacao(){
       cartaoImagem:       cartaoImagem,
       lat:                geo.lat,
       lon:                geo.lon,
-      localizacaoCliente: geo.localizacaoCliente
+      localizacaoCliente: geo.localizacaoCliente,
+      clienteIp:          geo.clienteIp || ""
     };
 
     fetch(SCRIPT_URL, {
