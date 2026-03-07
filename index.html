@@ -619,6 +619,8 @@ function gerarAutorizacao(){
       clienteIp:          geo.clienteIp || ""
     };
 
+    console.log("Enviando dados - clienteIp:", dados.clienteIp, "localizacao:", dados.localizacaoCliente);
+
     fetch(SCRIPT_URL, {
       method:   "POST",
       redirect: "follow",
