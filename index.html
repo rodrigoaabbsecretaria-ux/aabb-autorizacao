@@ -433,14 +433,9 @@ function obterLocalizacao(){
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     function usarIP(){
-      // Busca localização pelo backend (Apps Script) que não tem restrições de CORS/HTTPS
-      fetch(SCRIPT_URL + "?acao=getLocalizacao")
-        .then(r => r.json()).catch(() => ({}))
-        .then(function(d){
-          console.log("IP via backend:", d);
-          const loc = d.localizacao || "";
-          resolve({ lat: 0, lon: 0, localizacaoCliente: loc });
-        });
+      // Sem API externa disponível — deixa o backend resolver durante o doPost
+      console.log("Localização será resolvida pelo backend");
+      resolve({ lat: 0, lon: 0, localizacaoCliente: "" });
     }
 
     if(isMobile && navigator.geolocation){
