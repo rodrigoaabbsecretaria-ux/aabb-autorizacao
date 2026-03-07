@@ -428,7 +428,22 @@ function setStatus(msg, tipo){
 /* ── LOCALIZAÇÃO ── */
 function obterLocalizacao(){
   return new Promise(function(resolve){
-    if(navigator.geolocation){
+
+    // Detecta se é dispositivo móvel
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    function usarIP(){
+      fetch("https://ipwho.is/")
+        .then(r => r.json()).catch(() => ({}))
+        .then(function(d){
+          console.log("IP API:", d);
+          const loc = d.city ? (d.city + ", " + (d.region||"") + " - " + (d.country||"")) : "";
+          resolve({ lat: d.latitude||0, lon: d.longitude||0, localizacaoCliente: loc });
+        });
+    }
+
+    if(isMobile && navigator.geolocation){
+      // Só usa GPS no celular
       navigator.geolocation.getCurrentPosition(
         function(pos){
           const lat = pos.coords.latitude;
@@ -437,10 +452,8 @@ function obterLocalizacao(){
           fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat=" + lat + "&lon=" + lon, {
             headers: { "Accept-Language": "pt-BR" }
           })
-          .then(r => r.json())
-          .catch(() => { console.log("Nominatim falhou"); return null; })
+          .then(r => r.json()).catch(() => null)
           .then(function(geo){
-            console.log("Nominatim resposta:", geo);
             let loc = "";
             if(geo && geo.address){
               const a = geo.address;
@@ -449,31 +462,20 @@ function obterLocalizacao(){
               const pais   = a.country || "";
               loc = [cidade, estado, pais].filter(Boolean).join(", ");
             }
-            console.log("Localização final:", loc);
+            console.log("Localização GPS:", loc);
             resolve({ lat: lat, lon: lon, localizacaoCliente: loc || ("Lat: " + lat.toFixed(4) + ", Lon: " + lon.toFixed(4)) });
           });
         },
         function(err){
-          console.log("GPS erro:", err.code, err.message);
-          fetch("https://ipwho.is/")
-            .then(r => r.json()).catch(() => ({}))
-            .then(function(d){
-              console.log("IP API resposta:", d);
-              const loc = d.city ? (d.city + ", " + (d.region||"") + " - " + (d.country||"")) : "";
-              resolve({ lat: d.latitude||0, lon: d.longitude||0, localizacaoCliente: loc });
-            });
+          console.log("GPS falhou, usando IP:", err.message);
+          usarIP();
         },
         { timeout: 8000, enableHighAccuracy: false }
       );
     } else {
-      console.log("GPS não suportado, usando IP");
-      fetch("https://ipwho.is/")
-        .then(r => r.json()).catch(() => ({}))
-        .then(function(d){
-          console.log("IP API resposta:", d);
-          const loc = d.city ? (d.city + ", " + (d.region||"") + " - " + (d.country||"")) : "";
-          resolve({ lat: d.latitude||0, lon: d.longitude||0, localizacaoCliente: loc });
-        });
+      // Desktop: usa IP diretamente
+      console.log("Desktop detectado, usando IP");
+      usarIP();
     }
   });
 }
