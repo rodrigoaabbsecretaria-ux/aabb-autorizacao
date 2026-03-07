@@ -430,9 +430,28 @@ function obterLocalizacao(){
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     function usarIP(){
-      // Localização será resolvida pelo backend no momento de gerar o PDF
-      console.log("Desktop: localização resolvida pelo backend");
-      resolve({ lat: 0, lon: 0, localizacaoCliente: "" });
+      // Cloudflare trace — funciona sem CORS em qualquer origem
+      fetch("https://cloudflare.com/cdn-cgi/trace")
+        .then(r => r.text())
+        .catch(() => "")
+        .then(function(txt){
+          // Extrai o IP do cliente
+          const ipMatch = txt.match(/ip=([^\n]+)/);
+          const ip = ipMatch ? ipMatch[1].trim() : "";
+          console.log("IP cliente:", ip);
+          if(ip){
+            // Busca localização pelo IP
+            fetch("https://freeipapi.com/api/json/" + ip)
+              .then(r => r.json()).catch(() => ({}))
+              .then(function(d){
+                console.log("freeipapi:", d);
+                const loc = d.cityName ? (d.cityName + ", " + (d.regionName||"") + " - " + (d.countryName||"")) : "";
+                resolve({ lat: 0, lon: 0, localizacaoCliente: loc });
+              });
+          } else {
+            resolve({ lat: 0, lon: 0, localizacaoCliente: "" });
+          }
+        });
     }
 
     if(isMobile && navigator.geolocation){
