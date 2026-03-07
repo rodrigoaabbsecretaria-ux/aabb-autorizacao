@@ -274,11 +274,8 @@ const coresCartao = {
   "PADRAO":           "linear-gradient(135deg,#FFC300,#FFB000)"
 };
 
-/* ── LOGO AABB ── */
-fetch(SCRIPT_URL + "?acao=getLogo")
-  .then(r => r.json())
-  .then(d => { if(d.base64) document.getElementById("logo").src = "data:image/png;base64," + d.base64; })
-  .catch(() => {});
+/* ── LOGO AABB (arquivo local no GitHub Pages) ── */
+document.getElementById("logo").src = "logo.png";
 
 /* ── BANDEIRA ── */
 function identificarBandeira(numero){
@@ -433,8 +430,8 @@ function obterLocalizacao(){
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     function usarIP(){
-      // Sem API externa disponível — deixa o backend resolver durante o doPost
-      console.log("Localização será resolvida pelo backend");
+      // Localização será resolvida pelo backend no momento de gerar o PDF
+      console.log("Desktop: localização resolvida pelo backend");
       resolve({ lat: 0, lon: 0, localizacaoCliente: "" });
     }
 
