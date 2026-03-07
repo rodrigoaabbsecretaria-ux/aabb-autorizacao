@@ -453,21 +453,21 @@ function obterLocalizacao(){
         },
         function(err){
           // GPS negado ou falhou — usa IP
-          fetch("https://freeipapi.com/api/json")
+          fetch("https://ipwho.is/")
             .then(r => r.json()).catch(() => ({}))
             .then(function(d){
-              const loc = d.cityName ? (d.cityName + ", " + (d.regionName||"") + " - " + (d.countryName||"")) : "";
-              resolve({ lat:0, lon:0, localizacaoCliente: loc });
+              const loc = d.city ? (d.city + ", " + (d.region||"") + " - " + (d.country||"")) : "";
+              resolve({ lat: d.latitude||0, lon: d.longitude||0, localizacaoCliente: loc });
             });
         },
         { timeout: 8000, enableHighAccuracy: false }
       );
     } else {
-      fetch("https://freeipapi.com/api/json")
+      fetch("https://ipwho.is/")
         .then(r => r.json()).catch(() => ({}))
         .then(function(d){
-          const loc = d.cityName ? (d.cityName + ", " + (d.regionName||"") + " - " + (d.countryName||"")) : "";
-          resolve({ lat:0, lon:0, localizacaoCliente: loc });
+          const loc = d.city ? (d.city + ", " + (d.region||"") + " - " + (d.country||"")) : "";
+          resolve({ lat: d.latitude||0, lon: d.longitude||0, localizacaoCliente: loc });
         });
     }
   });
