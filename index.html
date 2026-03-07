@@ -385,12 +385,28 @@ let selfieBase64 = "";
 function carregarFoto(event){
   const file = event.target.files[0];
   if(!file) return;
+
   const reader = new FileReader();
   reader.onload = function(e){
-    selfieBase64 = e.target.result;
-    document.getElementById("labelUpload").style.display = "none";
-    document.getElementById("btnRetirar").style.display  = "block";
-    setStatus("✅ Foto carregada com sucesso!", "ok");
+    // Converte qualquer formato (JPEG, HEIC, etc) para PNG via canvas
+    const img = new Image();
+    img.onload = function(){
+      const canvas  = document.createElement("canvas");
+      // Mantém proporção mas limita tamanho máximo
+      const maxW = 600, maxH = 800;
+      let w = img.width, h = img.height;
+      if(w > maxW){ h = Math.round(h * maxW / w); w = maxW; }
+      if(h > maxH){ w = Math.round(w * maxH / h); h = maxH; }
+      canvas.width  = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, w, h);
+      selfieBase64 = canvas.toDataURL("image/png");
+      document.getElementById("labelUpload").style.display = "none";
+      document.getElementById("btnRetirar").style.display  = "block";
+      setStatus("✅ Foto carregada com sucesso!", "ok");
+    };
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
