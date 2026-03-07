@@ -426,6 +426,17 @@ function setStatus(msg, tipo){
 function obterLocalizacao(){
   return new Promise(function(resolve){
 
+    function usarIP(){
+      fetch("https://cloudflare.com/cdn-cgi/trace")
+        .then(r => r.text()).catch(() => "")
+        .then(function(txt){
+          const ipMatch = txt.match(/ip=([^\n]+)/);
+          const ip = ipMatch ? ipMatch[1].trim() : "";
+          console.log("IP cliente:", ip);
+          resolve({ lat: 0, lon: 0, localizacaoCliente: "", clienteIp: ip || "" });
+        });
+    }
+
     // GPS em qualquer dispositivo (mobile e desktop)
     if(navigator.geolocation){
       navigator.geolocation.getCurrentPosition(
@@ -433,6 +444,14 @@ function obterLocalizacao(){
           const lat = pos.coords.latitude;
           const lon = pos.coords.longitude;
           console.log("GPS OK:", lat, lon);
+
+          // Rejeita coordenadas de Virginia (servidores Google: ~36.6, ~-78.3)
+          const eVirginia = (lat > 35 && lat < 38 && lon > -80 && lon < -77);
+          if(eVirginia){
+            console.log("GPS retornou Virginia (servidor Google), usando IP");
+            usarIP();
+            return;
+          }
           fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat=" + lat + "&lon=" + lon, {
             headers: { "Accept-Language": "pt-BR" }
           })
