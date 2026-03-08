@@ -251,7 +251,7 @@ h3 {
 
 <script>
 
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwVgzppNNsu8XAsb5WvsyhEk4eYAbxhEcDrh1tKSgqqSOiiJkeVI9IJGGgWF_ASu3G2/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwAXhxGBpFLWO1R8-G5CpYbm1OYNO7_0oUcYrNw7zb4MHe2KkRlCnocoqRkmaXM4crq/exec";
 
 /* ── LOGOS E CORES ── */
 function svgBase64(svg){
@@ -749,7 +749,16 @@ function gerarAutorizacao(){
     const agora = new Date();
     const dataHoraLocal = agora.toLocaleDateString("pt-BR") + " " + agora.toLocaleTimeString("pt-BR");
     const codigoLocal   = "AABB-" + agora.getTime();
-    const localizacao   = geo.localizacaoCliente || "";
+
+    // Resolve localização no frontend se vier por IP
+    let localizacao = geo.localizacaoCliente || "";
+    if(!localizacao && geo.clienteIp){
+      try {
+        const r = await fetch("https://ipinfo.io/" + geo.clienteIp + "/json?token=ec8857b2b5a90a");
+        const d = await r.json();
+        if(d.city) localizacao = d.city + ", " + (d.region||"") + " - " + (d.country||"");
+      } catch(e) {}
+    }
 
     const rodapeImagem = await gerarImagemRodape(localizacao, dataHoraLocal, codigoLocal).catch(() => "");
 
