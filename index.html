@@ -2,6 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style>
 
 * { box-sizing: border-box; }
@@ -971,17 +972,29 @@ function gerarImagemCartao(bandeira, numero, nome, validade){
   }); // fim Promise
 }
 
+/* ── GERAR QR CODE LOCAL (sem chamada externa) ── */
+function gerarQRCanvas(texto, tamanho){
+  const qr = qrcode(0, 'M');
+  qr.addData(texto);
+  qr.generate();
+  const modCount = qr.getModuleCount();
+  const cell = Math.floor(tamanho / modCount);
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = cell * modCount;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#ffffff"; ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = "#000000";
+  for(let r=0;r<modCount;r++){
+    for(let c=0;c<modCount;c++){
+      if(qr.isDark(r,c)) ctx.fillRect(c*cell, r*cell, cell, cell);
+    }
+  }
+  return canvas;
+}
+
 /* ── GERAR IMAGEM RODAPÉ (QR + dados juntos) ── */
 async function gerarImagemRodape(localizacao, dataHora, codigo){
-  // Busca QR via API
-  const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" + encodeURIComponent(codigo);
-  const qrImg = await new Promise((res, rej) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => res(img);
-    img.onerror = () => rej();
-    img.src = qrUrl;
-  }).catch(() => null);
+  const qrCanvas = gerarQRCanvas(codigo, 100);
 
   const canvas = document.createElement("canvas");
   canvas.width  = 500;
@@ -992,8 +1005,8 @@ async function gerarImagemRodape(localizacao, dataHora, codigo){
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // QR
-  if(qrImg) ctx.drawImage(qrImg, 0, 5, 100, 100);
+  // QR local
+  ctx.drawImage(qrCanvas, 0, 5, 100, 100);
 
   // Dados ao lado do QR
   const partes = dataHora.split(" ");
