@@ -253,19 +253,322 @@ h3 {
 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby7tpFZXvRQuNNoZ05qpRJT4k4yB5j2_mhBDd9OUYHQaMQj891GMy5fA9BUK7kZvYz6/exec";
 
-/* ── LOGOS E CORES ── */
-function svgBase64(svg){
-  return "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svg)));
+/* ── DESENHAR LOGO DA BANDEIRA NO CANVAS (SVG puro, sem imagem externa) ── */
+function desenharLogo(ctx, bandeira, x, y, w, h){
+  ctx.save();
+  ctx.translate(x, y);
+
+  if(bandeira === "VISA"){
+    // VISA: fundo azul escuro + texto branco bold italic
+    ctx.font = "italic bold " + Math.round(h*0.85) + "px Arial";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "top";
+    // Sombra azul
+    ctx.shadowColor = "rgba(0,0,100,0.5)";
+    ctx.shadowBlur = 4;
+    ctx.fillText("VISA", w, h*0.05);
+    ctx.shadowBlur = 0;
+
+  } else if(bandeira === "MASTERCARD"){
+    // Dois círculos sobrepostos: vermelho + laranja
+    const r = h * 0.46;
+    const cy = h / 2;
+    const cx1 = w/2 - r*0.5;
+    const cx2 = w/2 + r*0.5;
+    ctx.beginPath(); ctx.arc(cx1, cy, r, 0, Math.PI*2); ctx.fillStyle = "#EB001B"; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx2, cy, r, 0, Math.PI*2); ctx.fillStyle = "#F79E1B"; ctx.fill();
+    // Interseção laranja médio
+    ctx.beginPath();
+    ctx.arc(cx1, cy, r, -Math.PI/3, Math.PI/3); ctx.arc(cx2, cy, r, Math.PI+Math.PI/3, Math.PI-Math.PI/3, true);
+    ctx.closePath(); ctx.fillStyle = "#FF5F00"; ctx.fill();
+
+  } else if(bandeira === "AMERICAN EXPRESS"){
+    ctx.fillStyle = "rgba(255,255,255,0.15)";
+    ctx.beginPath(); ctx.roundRect(0, 0, w, h, 6); ctx.fill();
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "bold " + Math.round(h*0.28) + "px Arial";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.letterSpacing = "1px";
+    ctx.fillText("AMERICAN", 4, h*0.08);
+    ctx.fillText("EXPRESS", 4, h*0.46);
+
+  } else if(bandeira === "DINERS"){
+    const r = h * 0.38;
+    const cy = h / 2;
+    ctx.strokeStyle = "rgba(255,255,255,0.9)";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(w*0.32, cy, r, 0, Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(w*0.58, cy, r, 0, Math.PI*2); ctx.stroke();
+    ctx.fillStyle = "rgba(255,255,255,0.85)";
+    ctx.font = "bold " + Math.round(h*0.22) + "px Arial";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText("Diners", w*0.66, h*0.15);
+    ctx.fillText("Club", w*0.68, h*0.52);
+
+  } else if(bandeira === "HIPERCARD"){
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "bold " + Math.round(h*0.52) + "px Arial";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    ctx.fillText("hiper", w, h*0.42);
+    ctx.font = "bold " + Math.round(h*0.52) + "px Arial";
+    ctx.fillStyle = "#FFD700";
+    ctx.fillText("card", w, h*0.82);
+
+  } else if(bandeira === "ELO"){
+    // Elo: círculo com E + "lo" em laranja
+    const r = h * 0.42;
+    const cy = h/2;
+    ctx.beginPath(); ctx.arc(r+2, cy, r, 0, Math.PI*2);
+    ctx.fillStyle = "#FFD100"; ctx.fill();
+    ctx.font = "bold " + Math.round(r*1.2) + "px Arial";
+    ctx.fillStyle = "#000"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("e", r+2, cy+1);
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "bold " + Math.round(h*0.55) + "px Arial";
+    ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    ctx.fillText("lo", r*2+8, cy);
+  }
+
+  ctx.restore();
 }
 
-const logosBandeiras = {
-  "VISA": svgBase64('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80"><rect width="200" height="80" fill="none"/><text x="10" y="68" font-size="72" font-family="Arial,sans-serif" font-weight="900" font-style="italic" fill="white" letter-spacing="-3">VISA</text></svg>'),
-  "MASTERCARD": svgBase64('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 60"><circle cx="35" cy="30" r="28" fill="#EB001B"/><circle cx="65" cy="30" r="28" fill="#F79E1B"/><path d="M50 8.5a28 28 0 0 1 0 43A28 28 0 0 1 50 8.5z" fill="#FF5F00"/></svg>'),
-  "AMERICAN EXPRESS": svgBase64('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 60"><rect width="160" height="60" rx="6" fill="rgba(255,255,255,0.15)"/><text x="8" y="26" font-size="16" font-family="Arial,sans-serif" font-weight="bold" fill="white" letter-spacing="1">AMERICAN</text><text x="8" y="50" font-size="16" font-family="Arial,sans-serif" font-weight="bold" fill="white" letter-spacing="1">EXPRESS</text></svg>'),
-  "DINERS": svgBase64('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 60"><circle cx="40" cy="30" r="24" fill="none" stroke="white" stroke-width="3"/><circle cx="68" cy="30" r="24" fill="none" stroke="white" stroke-width="3"/><text x="100" y="20" font-size="11" font-family="Arial,sans-serif" font-weight="bold" fill="white">Diners</text><text x="100" y="36" font-size="11" font-family="Arial,sans-serif" font-weight="bold" fill="white">Club</text></svg>'),
-  "HIPERCARD": svgBase64('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 50"><text x="4" y="40" font-size="36" font-family="Arial,sans-serif" font-weight="900" fill="white" letter-spacing="-1">hipercard</text></svg>'),
-  "ELO": svgBase64('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50"><text x="4" y="44" font-size="46" font-family="Arial,sans-serif" font-weight="900" fill="white">elo</text></svg>')
-};
+/* ── GERAR IMAGEM DO CARTÃO ── */
+function gerarImagemCartao(bandeira, numero, nome, validade){
+  return new Promise(function(resolve){
+  const canvas  = document.createElement("canvas");
+  canvas.width  = 560;
+  canvas.height = 330;
+  const ctx = canvas.getContext("2d");
+
+  // === IDENTIDADE VISUAL POR BANDEIRA ===
+  const identidade = {
+    "VISA": {
+      bg: (ctx,x,y,w,h) => {
+        // Gradiente azul clássico VISA
+        const g = ctx.createLinearGradient(x,y,x+w,y+h);
+        g.addColorStop(0,"#1A1F71"); g.addColorStop(1,"#1565C0");
+        ctx.fillStyle = g;
+      },
+      chip: "#C8A400",
+      numColor: "#FFFFFF",
+      textoColor: "rgba(255,255,255,0.88)",
+      contactless: "rgba(255,255,255,0.45)"
+    },
+    "MASTERCARD": {
+      bg: (ctx,x,y,w,h) => {
+        const g = ctx.createLinearGradient(x,y,x+w,y+h);
+        g.addColorStop(0,"#1a1a1a"); g.addColorStop(1,"#2d2d2d");
+        ctx.fillStyle = g;
+        // Padrão sutil de fundo
+      },
+      chip: "#D4AF37",
+      numColor: "#FFFFFF",
+      textoColor: "rgba(255,255,255,0.85)",
+      contactless: "rgba(255,255,255,0.4)"
+    },
+    "AMERICAN EXPRESS": {
+      bg: (ctx,x,y,w,h) => {
+        const g = ctx.createLinearGradient(x,y,x+w,y+h);
+        g.addColorStop(0,"#108168"); g.addColorStop(1,"#006651");
+        ctx.fillStyle = g;
+      },
+      chip: "#C0C0C0",
+      numColor: "#FFFFFF",
+      textoColor: "rgba(255,255,255,0.88)",
+      contactless: "rgba(255,255,255,0.4)"
+    },
+    "DINERS": {
+      bg: (ctx,x,y,w,h) => {
+        const g = ctx.createLinearGradient(x,y,x+w,y+h);
+        g.addColorStop(0,"#004E7C"); g.addColorStop(1,"#0079BE");
+        ctx.fillStyle = g;
+      },
+      chip: "#D4AF37",
+      numColor: "#FFFFFF",
+      textoColor: "rgba(255,255,255,0.85)",
+      contactless: "rgba(255,255,255,0.4)"
+    },
+    "HIPERCARD": {
+      bg: (ctx,x,y,w,h) => {
+        const g = ctx.createLinearGradient(x,y,x+w,y+h);
+        g.addColorStop(0,"#8B0000"); g.addColorStop(1,"#CC0000");
+        ctx.fillStyle = g;
+      },
+      chip: "#D4AF37",
+      numColor: "#FFFFFF",
+      textoColor: "rgba(255,255,255,0.88)",
+      contactless: "rgba(255,255,255,0.4)"
+    },
+    "ELO": {
+      bg: (ctx,x,y,w,h) => {
+        const g = ctx.createLinearGradient(x,y,x+w,y+h);
+        g.addColorStop(0,"#111111"); g.addColorStop(0.5,"#1a1a1a"); g.addColorStop(1,"#2a2a2a");
+        ctx.fillStyle = g;
+      },
+      chip: "#FFD100",
+      numColor: "#FFFFFF",
+      textoColor: "rgba(255,255,255,0.85)",
+      contactless: "rgba(255,255,255,0.4)"
+    }
+  };
+
+  const id = identidade[bandeira] || {
+    bg: (ctx,x,y,w,h) => {
+      const g = ctx.createLinearGradient(x,y,x+w,y+h);
+      g.addColorStop(0,"#1a3a6b"); g.addColorStop(1,"#2255a0");
+      ctx.fillStyle = g;
+    },
+    chip: "#D4AF37", numColor:"#FFFFFF",
+    textoColor:"rgba(255,255,255,0.85)", contactless:"rgba(255,255,255,0.4)"
+  };
+
+  // Sombra flutuante
+  ctx.shadowColor   = "rgba(0,0,0,0.45)";
+  ctx.shadowBlur    = 18;
+  ctx.shadowOffsetX = 6;
+  ctx.shadowOffsetY = 8;
+
+  const r = 24, x = 10, y = 10, w = 510, h = 290;
+
+  // Fundo
+  id.bg(ctx, x, y, w, h);
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+  ctx.fill();
+  ctx.shadowColor = "transparent";
+
+  // Padrão decorativo de fundo por bandeira
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+  ctx.clip();
+
+  if(bandeira === "MASTERCARD"){
+    // Círculos decorativos sutis no fundo
+    ctx.globalAlpha = 0.06;
+    for(let i=0;i<4;i++){
+      ctx.beginPath();
+      ctx.arc(420+i*30, 280, 80+i*25, 0, Math.PI*2);
+      ctx.fillStyle = "#FF5F00"; ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  } else if(bandeira === "VISA"){
+    // Faixa diagonal sutil
+    ctx.globalAlpha = 0.07;
+    const gd = ctx.createLinearGradient(x, y+h, x+w, y);
+    gd.addColorStop(0,"transparent"); gd.addColorStop(0.5,"#4FC3F7"); gd.addColorStop(1,"transparent");
+    ctx.fillStyle = gd;
+    ctx.fillRect(x, y, w, h);
+    ctx.globalAlpha = 1;
+  } else if(bandeira === "ELO"){
+    // Linhas diagonais douradas sutis
+    ctx.globalAlpha = 0.08;
+    ctx.strokeStyle = "#FFD100"; ctx.lineWidth = 30;
+    for(let i=-2;i<6;i++){
+      ctx.beginPath();
+      ctx.moveTo(x + i*120, y); ctx.lineTo(x + i*120 - 80, y+h);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  } else if(bandeira === "HIPERCARD"){
+    // Ondas vermelhas sutis
+    ctx.globalAlpha = 0.1;
+    ctx.strokeStyle = "#FF6666"; ctx.lineWidth = 40;
+    for(let i=0;i<4;i++){
+      ctx.beginPath();
+      ctx.arc(x+w+50, y+h/2, 100+i*70, Math.PI*0.6, Math.PI*1.4);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+
+  // Reflexo sutil no topo
+  const refGrad = ctx.createLinearGradient(x, y, x, y+h*0.5);
+  refGrad.addColorStop(0, "rgba(255,255,255,0.15)");
+  refGrad.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = refGrad;
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h/2); ctx.lineTo(x,y+h/2); ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+  ctx.fill();
+
+  // Nome do banco
+  const banco = detectarBanco(numero);
+  if(banco){
+    ctx.font = "bold 17px Arial";
+    ctx.fillStyle = id.textoColor;
+    ctx.textAlign = "left";
+    ctx.fillText(banco, 32, 50);
+  }
+
+  // Chip dourado
+  ctx.fillStyle = id.chip;
+  ctx.beginPath(); ctx.roundRect(32, 86, 56, 42, 7); ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.strokeStyle = "rgba(0,0,0,0.3)"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(32,107); ctx.lineTo(88,107); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(60,86);  ctx.lineTo(60,128); ctx.stroke();
+  ctx.strokeStyle = "rgba(0,0,0,0.2)"; ctx.lineWidth = 0.8;
+  ctx.strokeRect(38, 92, 44, 30);
+
+  // Contactless
+  ctx.strokeStyle = id.contactless;
+  ctx.lineWidth = 2.5;
+  for(let i=0;i<3;i++){
+    ctx.beginPath();
+    ctx.arc(114, 107, 12+i*10, -Math.PI*0.6, Math.PI*0.6);
+    ctx.stroke();
+  }
+
+  // Número
+  ctx.font = "bold 26px 'Courier New', monospace";
+  ctx.textAlign = "left";
+  ctx.fillStyle = id.numColor;
+  ctx.shadowColor = "rgba(0,0,0,0.3)";
+  ctx.shadowBlur = 4;
+  ctx.fillText(numero.replace(/\s/g,"  "), 32, 178);
+  ctx.shadowColor = "transparent";
+
+  // Nome
+  ctx.font = "15px Arial";
+  ctx.fillStyle = id.textoColor;
+  ctx.fillText(nome.substring(0,32).toUpperCase(), 32, 218);
+
+  // Validade
+  ctx.font = "13px Arial";
+  ctx.fillStyle = "rgba(255,255,255,0.6)";
+  ctx.fillText("VÁLIDO: " + validade, 32, 246);
+
+  // Logo bandeira
+  desenharLogo(ctx, bandeira, x+w-130, y+8, 120, 62);
+
+  resolve(canvas.toDataURL("image/png"));
+  }); // fim Promise
+}
 
 // Detecção de banco pelo BIN
 function detectarBanco(numero){
@@ -665,21 +968,29 @@ function gerarImagemCartao(bandeira, numero, nome, validade){
   ctx.fillStyle = "rgba(255,255,255,0.65)";
   ctx.fillText("VÁLIDO: " + validade, 32, 246);
 
-  // Logo bandeira
-  const svgSrc = logosBandeiras[bandeira];
-  if(svgSrc){
+  // Logo bandeira via URL
+  const logoUrl = logosBandeirasUrl[bandeira];
+  if(logoUrl){
     const logoImg = new Image();
+    logoImg.crossOrigin = "anonymous";
     logoImg.onload = function(){
       ctx.drawImage(logoImg, canvas.width - 125, 14, 105, 60);
       resolve(canvas.toDataURL("image/png"));
     };
-    logoImg.onerror = function(){ resolve(canvas.toDataURL("image/png")); };
-    logoImg.src = svgSrc;
+    logoImg.onerror = function(){
+      // Fallback: texto
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      ctx.font = "bold 20px Arial";
+      ctx.textAlign = "right";
+      ctx.fillText(bandeira, canvas.width - 32, 52);
+      resolve(canvas.toDataURL("image/png"));
+    };
+    logoImg.src = logoUrl;
   } else {
     ctx.fillStyle = "rgba(255,255,255,0.9)";
-    ctx.font = "bold 18px Arial";
+    ctx.font = "bold 20px Arial";
     ctx.textAlign = "right";
-    ctx.fillText(bandeira, canvas.width - 32, 50);
+    ctx.fillText(bandeira, canvas.width - 32, 52);
     resolve(canvas.toDataURL("image/png"));
   }
   }); // fim Promise
