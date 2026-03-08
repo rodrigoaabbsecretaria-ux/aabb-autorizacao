@@ -388,16 +388,24 @@ function carregarFoto(event){
     // Converte qualquer formato (JPEG, HEIC, etc) para PNG via canvas
     const img = new Image();
     img.onload = function(){
-      const canvas  = document.createElement("canvas");
-      // Mantém proporção mas limita tamanho máximo
+      const padding = 16;
       const maxW = 600, maxH = 800;
       let w = img.width, h = img.height;
       if(w > maxW){ h = Math.round(h * maxW / w); w = maxW; }
       if(h > maxH){ w = Math.round(w * maxH / h); h = maxH; }
-      canvas.width  = w;
-      canvas.height = h;
+      const canvas  = document.createElement("canvas");
+      canvas.width  = w + padding * 2;
+      canvas.height = h + padding * 2;
       const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, w, h);
+      // Fundo transparente com sombra flutuante
+      ctx.shadowColor   = "rgba(0,0,0,0.45)";
+      ctx.shadowBlur    = 16;
+      ctx.shadowOffsetX = 5;
+      ctx.shadowOffsetY = 7;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(padding, padding, w, h);
+      ctx.shadowColor = "transparent";
+      ctx.drawImage(img, padding, padding, w, h);
       selfieBase64 = canvas.toDataURL("image/png");
       document.getElementById("labelUpload").style.display = "none";
       document.getElementById("btnRetirar").style.display  = "block";
@@ -531,9 +539,15 @@ function mostrarErro(msg){
 /* ── GERAR IMAGEM DO CARTÃO ── */
 function gerarImagemCartao(bandeira, numero, nome, validade){
   const canvas  = document.createElement("canvas");
-  canvas.width  = 480;
-  canvas.height = 280;
+  canvas.width  = 500;
+  canvas.height = 300;
   const ctx = canvas.getContext("2d");
+
+  // Sombra flutuante
+  ctx.shadowColor   = "rgba(0,0,0,0.45)";
+  ctx.shadowBlur    = 18;
+  ctx.shadowOffsetX = 6;
+  ctx.shadowOffsetY = 8;
 
   const cores = {
     "VISA":             ["#1A1F71","#3A47D5"],
@@ -546,23 +560,27 @@ function gerarImagemCartao(bandeira, numero, nome, validade){
   };
 
   const [c1, c2] = cores[bandeira] || cores["OUTRO"];
-  const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  const grad = ctx.createLinearGradient(10, 10, 480, 280);
   grad.addColorStop(0, c1);
   grad.addColorStop(1, c2);
   ctx.fillStyle = grad;
 
   const r = 24;
+  const x = 10, y = 10, w = 470, h = 270;
   ctx.beginPath();
-  ctx.moveTo(r,0); ctx.lineTo(canvas.width-r,0);
-  ctx.quadraticCurveTo(canvas.width,0,canvas.width,r);
-  ctx.lineTo(canvas.width,canvas.height-r);
-  ctx.quadraticCurveTo(canvas.width,canvas.height,canvas.width-r,canvas.height);
-  ctx.lineTo(r,canvas.height);
-  ctx.quadraticCurveTo(0,canvas.height,0,canvas.height-r);
-  ctx.lineTo(0,r);
-  ctx.quadraticCurveTo(0,0,r,0);
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);
   ctx.closePath();
   ctx.fill();
+
+  // Remove sombra para elementos internos
+  ctx.shadowColor = "transparent";
 
   // Chip dourado
   ctx.fillStyle = "#d4af37";
