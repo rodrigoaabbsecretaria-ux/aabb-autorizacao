@@ -251,7 +251,7 @@ h3 {
 
 <script>
 
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwqb_3rL_P_3sQEjbMxJDp3kcvnkKHbx6rmJSJ-DGOywu3Kx6z6gaSH8KkBZqdxi5I9/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwVgzppNNsu8XAsb5WvsyhEk4eYAbxhEcDrh1tKSgqqSOiiJkeVI9IJGGgWF_ASu3G2/exec";
 
 /* ── LOGOS E CORES ── */
 function svgBase64(svg){
@@ -563,8 +563,8 @@ function mostrarErro(msg){
 function gerarImagemCartao(bandeira, numero, nome, validade){
   return new Promise(function(resolve){
   const canvas  = document.createElement("canvas");
-  canvas.width  = 500;
-  canvas.height = 300;
+  canvas.width  = 560;
+  canvas.height = 330;
   const ctx = canvas.getContext("2d");
 
   // Sombra flutuante
@@ -584,12 +584,13 @@ function gerarImagemCartao(bandeira, numero, nome, validade){
   };
 
   const [c1, c2] = cores[bandeira] || cores["OUTRO"];
-  const grad = ctx.createLinearGradient(10, 10, 490, 290);
+  const grad = ctx.createLinearGradient(10, 10, 520, 300);
   grad.addColorStop(0, c1);
   grad.addColorStop(1, c2);
   ctx.fillStyle = grad;
 
-  const r = 24, x = 10, y = 10, w = 470, h = 270;
+  // Cartão com margem suficiente para a sombra
+  const r = 24, x = 10, y = 10, w = 510, h = 290;
   ctx.beginPath();
   ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
   ctx.quadraticCurveTo(x+w,y,x+w,y+r);
@@ -605,7 +606,7 @@ function gerarImagemCartao(bandeira, numero, nome, validade){
   ctx.shadowColor = "transparent";
 
   // Reflexo sutil
-  const refGrad = ctx.createLinearGradient(10, 10, 10, 130);
+  const refGrad = ctx.createLinearGradient(10, 10, 10, 150);
   refGrad.addColorStop(0, "rgba(255,255,255,0.18)");
   refGrad.addColorStop(1, "rgba(255,255,255,0)");
   ctx.fillStyle = refGrad;
@@ -623,53 +624,53 @@ function gerarImagemCartao(bandeira, numero, nome, validade){
     ctx.font = "bold 17px Arial";
     ctx.fillStyle = "rgba(255,255,255,0.75)";
     ctx.textAlign = "left";
-    ctx.fillText(banco, 30, 46);
+    ctx.fillText(banco, 32, 48);
   }
 
   // Chip dourado
   ctx.fillStyle = "#d4af37";
-  ctx.beginPath(); ctx.roundRect(30, 82, 56, 42, 7); ctx.fill();
+  ctx.beginPath(); ctx.roundRect(32, 86, 56, 42, 7); ctx.fill();
   ctx.strokeStyle = "#f5e28a"; ctx.lineWidth = 1.5; ctx.stroke();
   ctx.strokeStyle = "#b8960c"; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(30,103); ctx.lineTo(86,103); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(58,82);  ctx.lineTo(58,124); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(32,107); ctx.lineTo(88,107); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(60,86);  ctx.lineTo(60,128); ctx.stroke();
   ctx.strokeStyle = "#c8a000"; ctx.lineWidth = 0.8;
-  ctx.strokeRect(36, 88, 44, 30);
+  ctx.strokeRect(38, 92, 44, 30);
 
   // Contactless
   ctx.strokeStyle = "rgba(255,255,255,0.4)";
   ctx.lineWidth = 2;
   for(let i=0;i<3;i++){
     ctx.beginPath();
-    ctx.arc(110, 103, 12+i*10, -Math.PI*0.6, Math.PI*0.6);
+    ctx.arc(114, 107, 12+i*10, -Math.PI*0.6, Math.PI*0.6);
     ctx.stroke();
   }
 
   // Número
-  ctx.font = "bold 24px 'Courier New', monospace";
+  ctx.font = "bold 26px 'Courier New', monospace";
   ctx.textAlign = "left";
   ctx.fillStyle = "white";
   ctx.shadowColor = "rgba(0,0,0,0.3)";
   ctx.shadowBlur = 4;
-  ctx.fillText(numero.replace(/\s/g,"  "), 28, 172);
+  ctx.fillText(numero.replace(/\s/g,"  "), 32, 178);
   ctx.shadowColor = "transparent";
 
   // Nome
   ctx.font = "15px Arial";
   ctx.fillStyle = "rgba(255,255,255,0.85)";
-  ctx.fillText(nome.substring(0,26).toUpperCase(), 28, 210);
+  ctx.fillText(nome.substring(0,28).toUpperCase(), 32, 218);
 
   // Validade
   ctx.font = "13px Arial";
   ctx.fillStyle = "rgba(255,255,255,0.65)";
-  ctx.fillText("VÁLIDO: " + validade, 28, 238);
+  ctx.fillText("VÁLIDO: " + validade, 32, 246);
 
-  // Logo bandeira via imagem (aguarda carregar)
+  // Logo bandeira
   const svgSrc = logosBandeiras[bandeira];
   if(svgSrc){
     const logoImg = new Image();
     logoImg.onload = function(){
-      ctx.drawImage(logoImg, canvas.width - 115, 12, 98, 56);
+      ctx.drawImage(logoImg, canvas.width - 125, 14, 105, 60);
       resolve(canvas.toDataURL("image/png"));
     };
     logoImg.onerror = function(){ resolve(canvas.toDataURL("image/png")); };
@@ -678,13 +679,54 @@ function gerarImagemCartao(bandeira, numero, nome, validade){
     ctx.fillStyle = "rgba(255,255,255,0.9)";
     ctx.font = "bold 18px Arial";
     ctx.textAlign = "right";
-    ctx.fillText(bandeira, canvas.width - 28, 48);
+    ctx.fillText(bandeira, canvas.width - 32, 50);
     resolve(canvas.toDataURL("image/png"));
   }
   }); // fim Promise
 }
 
-/* ── GERAR PDF ── */
+/* ── GERAR IMAGEM RODAPÉ (QR + dados juntos) ── */
+async function gerarImagemRodape(localizacao, dataHora, codigo){
+  // Busca QR via API
+  const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" + encodeURIComponent(codigo);
+  const qrImg = await new Promise((res, rej) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => res(img);
+    img.onerror = () => rej();
+    img.src = qrUrl;
+  }).catch(() => null);
+
+  const canvas = document.createElement("canvas");
+  canvas.width  = 500;
+  canvas.height = 110;
+  const ctx = canvas.getContext("2d");
+
+  // Fundo branco
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // QR
+  if(qrImg) ctx.drawImage(qrImg, 0, 5, 100, 100);
+
+  // Dados ao lado do QR
+  const partes = dataHora.split(" ");
+  const linhas = [
+    "📅  " + (partes[0] || ""),
+    "🕐  " + (partes[1] || ""),
+    "📍  " + localizacao,
+    "🔑  " + codigo
+  ];
+  ctx.font = "15px 'Courier New', monospace";
+  ctx.fillStyle = "#222222";
+  linhas.forEach((linha, i) => {
+    ctx.fillText(linha, 112, 24 + i * 22);
+  });
+
+  return canvas.toDataURL("image/png");
+}
+
+
 function gerarAutorizacao(){
   if(!validarCampos()) return;
 
@@ -703,7 +745,14 @@ function gerarAutorizacao(){
     document.getElementById("validade").value
   ).then(function(cartaoImagem){
 
-  obterLocalizacao().then(function(geo){
+  obterLocalizacao().then(async function(geo){
+    const agora = new Date();
+    const dataHoraLocal = agora.toLocaleDateString("pt-BR") + " " + agora.toLocaleTimeString("pt-BR");
+    const codigoLocal   = "AABB-" + agora.getTime();
+    const localizacao   = geo.localizacaoCliente || "";
+
+    const rodapeImagem = await gerarImagemRodape(localizacao, dataHoraLocal, codigoLocal).catch(() => "");
+
     const dados = {
       acao:               "gerarPDF",
       nome:               document.getElementById("nome").value,
@@ -715,9 +764,10 @@ function gerarAutorizacao(){
       bandeira:           bandeira,
       selfie:             selfieBase64,
       cartaoImagem:       cartaoImagem,
+      rodapeImagem:       rodapeImagem,
       lat:                geo.lat,
       lon:                geo.lon,
-      localizacaoCliente: geo.localizacaoCliente,
+      localizacaoCliente: localizacao,
       clienteIp:          geo.clienteIp || ""
     };
 
