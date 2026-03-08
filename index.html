@@ -181,7 +181,7 @@ h3 {
   <div class="credit-card-preview" id="cartaoPreview">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;">
       <div id="previewBanco" style="font-size:13px;font-weight:bold;color:rgba(255,255,255,0.75);letter-spacing:1px;"></div>
-      <div class="logo-bandeira"><img id="imgBandeira" alt=""></div>
+      <div class="logo-bandeira"><canvas id="imgBandeira" width="110" height="55" style="display:block;"></canvas></div>
     </div>
     <div class="chip"></div>
     <div class="card-number" id="previewNumero">0000 0000 0000 0000</div>
@@ -587,12 +587,12 @@ function detectarBanco(numero){
 }
 
 const coresCartao = {
-  "VISA":             "linear-gradient(135deg,#1A1F71,#2E5FD5)",
-  "MASTERCARD":       "linear-gradient(135deg,#1a1a1a,#3a3a3a)",
-  "AMERICAN EXPRESS": "linear-gradient(135deg,#1B4F8A,#2E77BC)",
+  "VISA":             "linear-gradient(135deg,#1A1F71,#1565C0)",
+  "MASTERCARD":       "linear-gradient(135deg,#1a1a1a,#2d2d2d)",
+  "AMERICAN EXPRESS": "linear-gradient(135deg,#108168,#006651)",
   "DINERS":           "linear-gradient(135deg,#004E7C,#0079BE)",
-  "HIPERCARD":        "linear-gradient(135deg,#8B0000,#CC1111)",
-  "ELO":              "linear-gradient(135deg,#111,#333)",
+  "HIPERCARD":        "linear-gradient(135deg,#8B0000,#CC0000)",
+  "ELO":              "linear-gradient(135deg,#111111,#2a2a2a)",
   "PADRAO":           "linear-gradient(135deg,#1a3a6b,#2255a0)"
 };
 
@@ -656,13 +656,10 @@ function atualizarCartao(){
   const elBanco = document.getElementById("previewBanco");
   if(elBanco) elBanco.innerText = banco;
 
-  const imgBandeira = document.getElementById("imgBandeira");
-  if(logosBandeiras[band]){
-    imgBandeira.src = logosBandeiras[band];
-    imgBandeira.style.display = "block";
-  } else {
-    imgBandeira.style.display = "none";
-  }
+  const canvasBandeira = document.getElementById("imgBandeira");
+  const ctxB = canvasBandeira.getContext("2d");
+  ctxB.clearRect(0, 0, canvasBandeira.width, canvasBandeira.height);
+  if(band !== "OUTRO") desenharLogo(ctxB, band, 0, 0, canvasBandeira.width, canvasBandeira.height);
 
   // Só bloqueia botão se número estiver COMPLETO e Luhn inválido
   const btnGerar = document.getElementById("btnGerar");
@@ -968,31 +965,9 @@ function gerarImagemCartao(bandeira, numero, nome, validade){
   ctx.fillStyle = "rgba(255,255,255,0.65)";
   ctx.fillText("VÁLIDO: " + validade, 32, 246);
 
-  // Logo bandeira via URL
-  const logoUrl = logosBandeirasUrl[bandeira];
-  if(logoUrl){
-    const logoImg = new Image();
-    logoImg.crossOrigin = "anonymous";
-    logoImg.onload = function(){
-      ctx.drawImage(logoImg, canvas.width - 125, 14, 105, 60);
-      resolve(canvas.toDataURL("image/png"));
-    };
-    logoImg.onerror = function(){
-      // Fallback: texto
-      ctx.fillStyle = "rgba(255,255,255,0.9)";
-      ctx.font = "bold 20px Arial";
-      ctx.textAlign = "right";
-      ctx.fillText(bandeira, canvas.width - 32, 52);
-      resolve(canvas.toDataURL("image/png"));
-    };
-    logoImg.src = logoUrl;
-  } else {
-    ctx.fillStyle = "rgba(255,255,255,0.9)";
-    ctx.font = "bold 20px Arial";
-    ctx.textAlign = "right";
-    ctx.fillText(bandeira, canvas.width - 32, 52);
-    resolve(canvas.toDataURL("image/png"));
-  }
+  // Logo bandeira via desenharLogo (canvas puro, sem imagem externa)
+  desenharLogo(ctx, bandeira, x+w-130, y+8, 120, 62);
+  resolve(canvas.toDataURL("image/png"));
   }); // fim Promise
 }
 
